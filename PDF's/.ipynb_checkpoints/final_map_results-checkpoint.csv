@@ -1,0 +1,10 @@
+Goal,Method,MAP
+"By 2020, total hazardous and nonhazardous waste will be reduced by 15% compared with the 2012 baseline",TF-IDF,0.41666666666666663
+"By 2020, total hazardous and nonhazardous waste will be reduced by 15% compared with the 2012 baseline",SBERT,0.663888888888889
+"By 2020, total hazardous and nonhazardous waste will be reduced by 15% compared with the 2012 baseline",Image,0.9415178571428571
+"By 2020, greenhouse gas emissions (Total Scope 1 and Scope 2) will be reduced by 20% compared with the 2012 baseline",TF-IDF,0.41666666666666663
+"By 2020, greenhouse gas emissions (Total Scope 1 and Scope 2) will be reduced by 20% compared with the 2012 baseline",SBERT,0.5873015873015873
+"By 2020, greenhouse gas emissions (Total Scope 1 and Scope 2) will be reduced by 20% compared with the 2012 baseline",Image,0.7277777777777776
+"By 2020, total water withdrawal (excluding non-contact cooling water) will be reduced by 5% compared with the 2012 baseline.",TF-IDF,0.0
+"By 2020, total water withdrawal (excluding non-contact cooling water) will be reduced by 5% compared with the 2012 baseline.",SBERT,0.22619047619047616
+"By 2020, total water withdrawal (excluding non-contact cooling water) will be reduced by 5% compared with the 2012 baseline.",Image,0.5523809523809524

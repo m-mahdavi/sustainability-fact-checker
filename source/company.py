@@ -1,5 +1,9 @@
+import io
 import os
+import re
 import fitz
+from ollama import chat
+from ollama import ChatResponse
 
 
 class Company:
@@ -26,9 +30,25 @@ class Company:
                 pdf_bytes = self._read_pdf(report_path)
                 with fitz.open(stream=pdf_bytes, filetype="pdf") as doc:
                     for page_num, page in enumerate(doc, start=1):
-                        full_text = page.get_text("text")
-                        paragraphs = [p.strip() for p in full_text.split("\n\n") if p.strip()]
-                        for text_block_id, paragraph in enumerate(paragraphs, start=1):
+                        print(f"Processing company {self.name}, document {file_name}, page {page_num}...")
+                        full_text = page.get_text("text").strip()
+                        paragraphs = []
+                        if len(full_text) < 300:
+                            paragraphs = [full_text]
+                        else:
+                            prompt = "The following text has been extracted from a page of a PDF. Segment this content into small text blocks according to the following rules: (1) Each block should represent a logical unit, such as a title, sentence, or short paragraph. (2) Each block must be meaningful, self-contained, and no longer than a short paragraph. (3) Each block must be shorter than 50 words. (4) If a block exceeds that length, divide it into smaller, logical blocks. Do not alter the content in any way. Only insert <DELIMITER> between logical text blocks. Do not add metadata, commentary, or any other formatting. The text is as follows:\n\n"                            
+                            response: ChatResponse = chat(model="llama3.2:3b-instruct-q4_K_M", messages=[
+                                {
+                                    "role": "user",
+                                    "content": f"{prompt} {full_text}",
+                                },
+                            ])
+                            paragraphs = response["message"]["content"].split("<DELIMITER>")
+                        new_paragraphs = []
+                        for p in paragraphs: 
+                            new_paragraphs += re.split(r"\n{2,}", p)
+                        new_paragraphs = [p.strip() for p in new_paragraphs if p.strip()]
+                        for text_block_id, paragraph in enumerate(new_paragraphs, start=1):
                             text_blocks.append({
                                 "company": self.name,
                                 "report": report_path,

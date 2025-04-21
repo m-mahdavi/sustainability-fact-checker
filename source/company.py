@@ -95,7 +95,7 @@ class Company:
                                 "page": page_num,
                                 "image_id": image_id,
                                 "image_path": image_path,
-                                "image_bytes": base_image["image"],
+                                # "image_bytes": base_image["image"],
                                 "ext": base_image["ext"],
                                 "embedding": self.embed(base_image["image"])
                             })
@@ -145,7 +145,7 @@ class Company:
 
         for item in self.text_blocks + self.images:
             item_copy = item.copy()
-            item_copy.pop("image_bytes", None)
+            # item_copy.pop("image_bytes", None)
             records.append(item_copy)
 
         output_path = os.path.join(output_dir, f"{self.name}.json")

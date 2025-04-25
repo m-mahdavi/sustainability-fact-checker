@@ -4,6 +4,7 @@ import re
 import json
 import uuid
 import fitz
+import gzip
 import numpy as np
 import sklearn.metrics.pairwise
 import torch
@@ -141,105 +142,98 @@ class Company:
 
     def save_database(self, output_dir="../database"):
         os.makedirs(output_dir, exist_ok=True)
-        records = []
-
-        for item in self.text_blocks + self.images:
-            item_copy = item.copy()
-            # item_copy.pop("image_bytes", None)
-            records.append(item_copy)
-
-        output_path = os.path.join(output_dir, f"{self.name}.json")
-        with open(output_path, "w") as f:
-            json.dump(records, f, indent=4)
-        print(f"Saved {len(records)} records to {output_path}")
+        records = [item.copy() for item in self.text_blocks + self.images]
+        output_path = os.path.join(output_dir, f"{self.name}.json.gz")
+        with gzip.open(output_path, "wt", encoding="utf-8") as f:
+            json.dump(records, f)
+        print(f"Saved {len(records)} compressed records to {output_path}")
         
     def load_database(self, input_dir="../database"):
-        db_file = os.path.join(input_dir, f"{self.name}.json")
+        db_file = os.path.join(input_dir, f"{self.name}.json.gz")
         if os.path.exists(db_file):
             try:
-                with open(db_file, "r") as f:
+                with gzip.open(db_file, "rt", encoding="utf-8") as f:
                     data = json.load(f)
                 for item in data:
                     if item.get("type") == "text":
                         self.text_blocks.append(item)
                     elif item.get("type") == "image":
                         self.images.append(item)
-                print(f"Loaded {len(data)} records from existing database: {db_file}")
+                print(f"Loaded {len(data)} compressed records from database: {db_file}")
             except Exception as e:
-                print(f"Failed to load existing database: {e}")
+                print(f"Failed to load compressed database: {e}")
 
-    def retrieve_evidence(self, query, k=10, database_path="../database"):
+    def retrieve_evidence(self, query, k=10):
         try:
             query_embedding = self.embed(query)
             if query_embedding is None:
                 print("Failed to embed the query.")
-                return []
-
-            file_path = os.path.join(database_path, f"{self.name}.json")
-            with open(file_path, "r") as f:
-                data = json.load(f)
-
-            data = [item for item in data if isinstance(item.get("embedding"), list) and len(item["embedding"]) == 512]
-            embeddings = np.array([np.array(item["embedding"]) for item in data if "embedding" in item])
-            if embeddings.size == 0:
-                print("No embeddings found in the database.")
-                return []
+                return [], []
 
             query_embedding = np.array(query_embedding).reshape(1, -1)
-            similarities = sklearn.metrics.pairwise.cosine_similarity(query_embedding, embeddings).flatten()
-            top_indices = similarities.argsort()[-k:][::-1]
-            top_similarities = similarities[top_indices]
 
-            results = []
-            for i in range(len(top_indices)):
-                record = data[top_indices[i]]
-                similarity_score = top_similarities[i]
-                results.append({
-                    "rank": i + 1,
-                    "similarity": float(similarity_score),
-                    "record": record
-                })
-            return results
+            text_data = [item for item in self.text_blocks if isinstance(item.get("embedding"), list) and len(item["embedding"]) == 512]
+            text_embeddings = np.array([np.array(item["embedding"]) for item in text_data])
+            text_results = []
+            if text_embeddings.size > 0:
+                text_similarities = sklearn.metrics.pairwise.cosine_similarity(query_embedding, text_embeddings).flatten()
+                top_text_indices = text_similarities.argsort()[-k:][::-1]
+                for i in range(len(top_text_indices)):
+                    record = text_data[top_text_indices[i]]
+                    similarity_score = text_similarities[top_text_indices[i]]
+                    text_results.append({
+                        "rank": i + 1,
+                        "similarity": float(similarity_score),
+                        "record": record
+                    })
+
+            image_data = [item for item in self.images if isinstance(item.get("embedding"), list) and len(item["embedding"]) == 512]
+            image_embeddings = np.array([np.array(item["embedding"]) for item in image_data])
+            image_results = []
+            if image_embeddings.size > 0:
+                image_similarities = sklearn.metrics.pairwise.cosine_similarity(query_embedding, image_embeddings).flatten()
+                top_image_indices = image_similarities.argsort()[-k:][::-1]
+                for i in range(len(top_image_indices)):
+                    record = image_data[top_image_indices[i]]
+                    similarity_score = image_similarities[top_image_indices[i]]
+                    image_results.append({
+                        "rank": i + 1,
+                        "similarity": float(similarity_score),
+                        "record": record
+                    })
+
+            return text_results, image_results
 
         except Exception as e:
             print(f"Error during evidence retrieval: {e}")
-            return []
+            return [], []
 
-    def verify_objective(self, objective, evidence, llm_model="llama3.2:3b-instruct-q4_K_M"):
+    def verify_objective(self, objective, text_evidence, llm_model="llama3.2"):
         try:
-            text_evidence = [
-                item for item in evidence
-                if item["record"].get("type") == "text" and "text" in item["record"]
-            ]
-
-            image_evidence = [
-                item for item in evidence
-                if item["record"].get("type") == "image"
-            ]
-
             if not text_evidence:
-                return "No text-based evidence found to verify the sustainability objective.", image_evidence
+                return "No text-based evidence found to verify the sustainability objective."
 
-            evidence_text = "\n\n".join([f"{item['record']['text']}" for item in text_evidence])
+            new_text_evidence = "\n\n".join([f"{item['record']['text']}" for item in text_evidence])
 
             prompt = f"""
-Verify the following sustainability objective using the provided text evidence.
+    Verify the following sustainability objective using the provided text evidence.
 
-Objective: "{objective}"
+    Objective: "{objective}"
 
-Text Evidence:
-{evidence_text}
+    Text Evidence:
+    {new_text_evidence}
 
-Please generate a concise verification report that:
-- Starts with a final verdict on whether the objective is true, false, or partially true.
-- Briefly lists all pieces of evidence that support or contradict the objective.
-- Do not write anything else except the above-mentioned final verdict and bullet points of evidence in markdown.
-"""
+    Please generate a concise verification report that:
+    - Starts with a final verdict on whether the objective is true, false, or partially true.
+    - Briefly lists all pieces of evidence that support or contradict the objective.
+    - Do not write anything else except the above-mentioned final verdict and bullet points of evidence in markdown.
+    """
 
             response = ollama.chat(model=llm_model, messages=[{"role": "user", "content": prompt}])
             verification_report = response["message"]["content"].strip()
-            return verification_report, image_evidence
+            return verification_report
 
         except Exception as e:
             print(f"Error generating verification report: {e}")
-            return None, []
+            return None
+

@@ -45,7 +45,7 @@ class Company:
                             paragraphs = [full_text]
                         else:
                             prompt = "The following text has been extracted from a page of a PDF. Segment this content into small text blocks according to the following rules: (1) Each block should represent a logical unit, such as a title, sentence, or short paragraph. (2) Each block must be meaningful, self-contained, and no longer than a short paragraph. (3) Each block must be shorter than 50 words. (4) If a block exceeds that length, divide it into smaller, logical blocks. Do not alter the content in any way. Only insert <DELIMITER> between logical text blocks. Do not add metadata, commentary, or any other formatting. The text is as follows:\n\n"                            
-                            response = ollama.chat(model=llm_model, messages=[{"role": "user", "content": f"{prompt} {full_text}"}])
+                            response = ollama.chat(model=llm_model, messages=[{"role": "user", "content": f"{prompt} {full_text}"}], options={"temperature": 0.0, "top_p": 1.0, "top_k": 0, "repeat_penalty": 1.0})
                             paragraphs = response["message"]["content"].split("<DELIMITER>")
                         new_paragraphs = []
                         for p in paragraphs:
@@ -213,7 +213,10 @@ class Company:
             if not text_evidence:
                 return "No text-based evidence found to verify the sustainability objective."
 
-            new_text_evidence = "\n\n".join([f"{item['record']['text']}" for item in text_evidence])
+            new_text_evidence = "\n\n".join([
+                f"{item['record']['text']} [report: {item['record']['file']}, page: {item['record']['page']}]"
+                for item in text_evidence
+            ])
 
             prompt = f"""
     Verify the following sustainability objective using the provided text evidence.
@@ -226,10 +229,12 @@ class Company:
     Please generate a concise verification report that:
     - Starts with a final verdict on whether the objective is true, false, or partially true.
     - Briefly lists all pieces of evidence that support or contradict the objective.
+    - Include the corresponding reference at the end of each evidence in the format **[report: xxx, page: yyy]**.
     - Do not write anything else except the above-mentioned final verdict and bullet points of evidence in markdown.
     """
 
-            response = ollama.chat(model=llm_model, messages=[{"role": "user", "content": prompt}])
+            response = ollama.chat(model=llm_model, messages=[{"role": "user", "content": prompt}],
+                                       options={"temperature": 0.0, "top_p": 1.0, "top_k": 0, "repeat_penalty": 1.0})
             verification_report = response["message"]["content"].strip()
             return verification_report
 

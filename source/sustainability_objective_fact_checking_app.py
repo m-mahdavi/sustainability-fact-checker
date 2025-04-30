@@ -7,8 +7,8 @@ import PIL
 sys.path.append("../source")
 import company
 
-st.set_page_config(page_title="Sustainability Objective Verification", layout="wide")
-st.title("📊 Sustainability Objective Verification")
+st.set_page_config(page_title="Sustainability Objective Fact-Checking", layout="wide")
+st.title("📊 Sustainability Objective Fact-Checking")
 
 available_companies = [
     folder for folder in os.listdir("../documents")

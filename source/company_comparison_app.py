@@ -7,7 +7,7 @@ import PIL
 sys.path.append("../source")
 import company
 
-st.set_page_config(page_title="Company Comparison Dashboard", layout="wide")
+st.set_page_config(page_title="Company Comparison", layout="wide")
 st.title("📊 Company Comparison")
 
 available_companies = [

@@ -25,3 +25,5 @@ pip install .
 
 - To use the system in a Jupyter Notebook interface, run: ```jupyter notebook notebooks/fact_checking.ipynb```
 - To launch the web-based user interface with Streamlit, run: ```streamlit run source/fact_checking_app.py```
+
+[](images/app/app_1.png)

@@ -1,0 +1,11 @@
+pandas
+ipython
+matplotlib
+numpy
+scikit-learn
+torch
+Pillow
+PyMuPDF
+clip-anytorch
+streamlit
+ollama

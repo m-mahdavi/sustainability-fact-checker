@@ -18,6 +18,7 @@
 git clone https://github.com/m-mahdavi/sustainability-fact-checker.git
 cd sustainability-fact-checker
 pip install .
+```
 
 
 ### Usage 

@@ -218,23 +218,29 @@ class Company:
                 for item in text_evidence
             ])
 
-            prompt = f"""
-    Verify the following sustainability objective using the provided text evidence.
+            prompt = f"""Verify the following sustainability objective using ONLY the provided text evidence.
 
-    Objective: "{objective}"
+Objective: "{objective}"
 
-    Text Evidence:
-    {new_text_evidence}
+Text Evidence:
+{new_text_evidence}
 
-    Please generate a concise verification report that:
-    - Starts with a final verdict on whether the objective is true, false, or partially true.
-    - Briefly lists all pieces of evidence that support or contradict the objective.
-    - Include the corresponding reference at the end of each evidence in the format **[report: xxx, page: yyy]**.
-    - Do not write anything else except the above-mentioned final verdict and bullet points of evidence in markdown.
-    """
+Instructions:
+You must strictly follow these formatting rules and output ONLY in the exact structure described below. 
+Do NOT add, explain, summarize, restate the instructions, or include anything outside of the required output.
 
-            response = ollama.chat(model=llm_model, messages=[{"role": "user", "content": prompt}],
-                                       options={"temperature": 0.0, "top_p": 1.0, "top_k": 0, "repeat_penalty": 1.0})
+Task:
+1. Write in Markdown format.
+2. First line: State the final verdict — exactly one of: True, False, or Partially True.
+3. Following lines: Present ONLY bullet points listing evidence that supports or contradicts the objective.
+4. Each bullet must end with a reference in the exact format: **[report: xxx, page: yyy]**.
+5. Do NOT include any section titles, extra text, or formatting beyond the verdict and bullet list."""
+
+            response = ollama.chat(
+                model=llm_model, 
+                messages=[{"role": "user", "content": prompt}],
+                options={"temperature": 0.0, "top_p": 1.0, "top_k": 0, "repeat_penalty": 1.0}
+                )
             verification_report = response["message"]["content"].strip()
             return verification_report
 

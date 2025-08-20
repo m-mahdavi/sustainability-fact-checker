@@ -7,6 +7,7 @@ import PIL
 sys.path.append("../source")
 import company
 
+
 st.set_page_config(page_title="Sustainability Objective Fact-Checking", layout="wide")
 st.title("📊 Sustainability Objective Fact-Checking")
 

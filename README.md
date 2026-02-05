@@ -27,3 +27,17 @@ pip install .
 - To launch the web-based user interface with Streamlit, run: ```streamlit run source/fact_checking_app.py```
 
 ![Example Scenario](images/app/app_1.png)
+
+
+## Citation
+
+If you use this repository in your research, please cite the following paper:
+
+```bibtex
+@inproceedings{mahdavi2025fact,
+  title={Fact-checking sustainability objectives using multimodal retrieval-augmented generation},
+  author={Mahdavi, Mohammad and Farahmand, Amirhosein and Nadi, Abolfazl},
+  booktitle={2025 IEEE International Conference on Data Mining Workshops (ICDMW)},
+  year={2025}
+}
+```
